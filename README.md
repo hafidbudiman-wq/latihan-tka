@@ -1,9 +1,15 @@
-# Latihan TKA Matematika Kelas 6 SD – Paket 2
+# Latihan TKA SD
 
-Aplikasi latihan interaktif 30 soal prediksi TKA Matematika SD (Kurikulum Merdeka), lengkap dengan kunci jawaban dan pembahasan.
+Kumpulan aplikasi latihan Tes Kemampuan Akademik (TKA) Kelas 6 SD, lengkap dengan kunci jawaban dan pembahasan. Bisa dibuka di HP, laptop, atau tablet lewat GitHub Pages.
 
-- **Mode Latihan**: cek jawaban per soal + pembahasan langsung
-- **Mode Simulasi Ujian**: timer 75 menit, nilai di akhir
-- Bentuk soal: Pilihan Ganda, PG Kompleks, Benar/Salah
+## Daftar latihan
+| Mapel | Paket | Folder |
+|---|---|---|
+| Matematika | Paket 2 (30 soal) | `matematika/paket-2/` |
 
-Buka langsung di browser (HP/laptop/tablet) lewat GitHub Pages. Satu file `index.html`, tanpa instalasi.
+## Struktur
+```
+index.html              ← halaman depan (daftar semua latihan)
+matematika/paket-2/     ← satu folder per paket
+```
+Tambah paket baru: buat folder `<mapel>/paket-N/index.html`, lalu tambahkan link-nya di `index.html` depan.
