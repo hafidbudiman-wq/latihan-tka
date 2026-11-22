@@ -115,6 +115,8 @@ a{color:var(--ung)}
 .svitem .tx b{display:block;font-size:13px;color:var(--c)}
 .svitem button{border:0;background:#fde8e8;color:#c33;border-radius:9px;padding:4px 10px;font-weight:700}
 .empty{text-align:center;color:var(--mut);padding:24px 10px}
+.teks{background:#fffdf5;border:2px solid #f0e2b8;border-radius:12px;padding:10px 12px;margin:0 0 10px;font-size:15px}
+.teks p{margin:0 0 6px}.teks .puisi{white-space:pre-line;font-style:italic;text-align:center}
 .hidden{display:none!important}
 .small{font-size:13px;color:var(--mut)}
 </style>
@@ -176,12 +178,13 @@ Object.values(BANK).forEach(s=>{if(s.t!=='pg')return;const r=seeded(s.key);const
 /* ---------- penyimpanan di browser ---------- */
 function load(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}}
 function store(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
-let OK=load('tka-ok',{});          // soal yang pernah dijawab benar
-let SAVED=load('tka-simpan',[]);   // soal yang disimpan untuk dibahas
+const NSP=(typeof NS!=='undefined')?NS:'';const MAPEL_NM=(typeof MAPEL!=='undefined')?MAPEL:'Matematika';
+let OK=load(NSP+'tka-ok',{});          // soal yang pernah dijawab benar
+let SAVED=load(NSP+'tka-simpan',[]);   // soal yang disimpan untuk dibahas
 let MODE=load('tka-mode','mudah'); // versi pembahasan
 SAVED=SAVED.filter(k=>BANK[k]);
 const isSaved=k=>SAVED.includes(k);
-function toggleSave(k){SAVED=isSaved(k)?SAVED.filter(x=>x!==k):[...SAVED,k];store('tka-simpan',SAVED)}
+function toggleSave(k){SAVED=isSaved(k)?SAVED.filter(x=>x!==k):[...SAVED,k];store(NSP+'tka-simpan',SAVED)}
 const plain=h=>{const d=document.createElement('div');d.innerHTML=h;return d.textContent.replace(/\s+/g,' ').trim()};
 
 /* ---------- HOME ---------- */
@@ -190,7 +193,7 @@ function home(tab){
   if(tab)TAB=tab;show('vHome');
   const total=Object.keys(BANK).length,done=Object.keys(OK).filter(k=>BANK[k]).length;
   let h=`<a class="back" href="../../index.html">← Semua latihan</a>
-  <div class="hero"><span class="tag">TKA Matematika · Kelas 6 SD</span><h1>Latihan Per Bagian 🎯</h1><p>${TOPIK.length} topik · ${total} soal · sudah dikuasai ${done} soal</p></div>
+  <div class="hero"><span class="tag">TKA ${MAPEL_NM} · Kelas 6 SD</span><h1>Latihan Per Bagian 🎯</h1><p>${TOPIK.length} topik · ${total} soal · sudah dikuasai ${done} soal</p></div>
   <div class="tabs"><button data-tab="topik" class="${TAB==='topik'?'on':''}">📚 Per Topik</button><button data-tab="level" class="${TAB==='level'?'on':''}">🎚️ Per Level</button><button data-tab="simpan" class="${TAB==='simpan'?'on':''}">📌 Disimpan (${SAVED.length})</button></div>`;
   if(TAB==='topik'){
     h+=`<div class="card"><div class="small">Pilih topik, lalu pilih <b>sub-bagian</b> dan <b>level</b> yang mau didalami. Tekan <b>📌 Simpan</b> di soal yang mau dibahas lagi nanti.</div>
@@ -215,7 +218,7 @@ function home(tab){
   document.querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{const l=+b.dataset.lv;const ks=Object.values(BANK).filter(s=>s.lv===l).map(s=>s.key);shuffle(ks);begin(ks,`Level ${LV[l][0]} · semua topik`,'level')});
   document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{toggleSave(b.dataset.del);home()});
   const ks=$('kerjaSimpan');if(ks)ks.onclick=()=>begin([...SAVED],'📌 Soal disimpan','simpan');
-  const hs=$('hapusSemua');if(hs)hs.onclick=()=>{hs.textContent='Yakin? Tekan lagi';hs.onclick=()=>{SAVED=[];store('tka-simpan',SAVED);home()}};
+  const hs=$('hapusSemua');if(hs)hs.onclick=()=>{hs.textContent='Yakin? Tekan lagi';hs.onclick=()=>{SAVED=[];store(NSP+'tka-simpan',SAVED);home()}};
   scrollTo(0,0);
 }
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -262,7 +265,7 @@ function render(){
   if(s.t==='pg'){h+='<div class="opts">';s.o.forEach((o,j)=>{let c='opt';if(ans[cur]===j)c+=' sel';if(rv){if(j===s.ans)c+=' right';else if(ans[cur]===j)c+=' wrong'}
     h+=`<button class="${c}" data-j="${j}" ${rv?'disabled':''}><span class="k">${'ABCD'[j]}</span><span>${o}</span></button>`});h+='</div>'}
   else if(s.t==='pgk'){h+=`<span class="hint">✓ Jawaban bisa lebih dari satu</span><div class="opts">`;s.o.forEach((o,j)=>{const on=ans[cur].includes(j),ok=s.ans.includes(j);let c='opt cb';if(on)c+=' sel';if(rv){if(ok)c+=' right';else if(on)c+=' wrong'}
-    h+=`<button class="${c}" data-j="${j}" ${rv?'disabled':''}><span class="k">${on||(rv&&ok)?'✓':''}</span><span>${o}</span></button>`});h+='</div>'}
+    h+=`<button class="${c}" data-j="${j}" ${rv?'disabled':''}><span class="k">${on||(rv&&ok)?'✓':j+1}</span><span>${o}</span></button>`});h+='</div>'}
   else{h+=`<p style="margin:6px 0 0;font-weight:600">Tentukan Benar atau Salah!</p><table class="bs"><tr><th>No</th><th>Pernyataan</th><th class="c">Benar</th><th class="c">Salah</th></tr>`;
     s.o.forEach((o,j)=>{h+=`<tr><td>${j+1}</td><td>${o}</td>`;[true,false].forEach(v=>{let c='pill';const pick=ans[cur][j]===v;if(pick)c+=' sel';if(rv){if(s.ans[j]===v)c+=pick?' right':' miss';else if(pick)c+=' wrong'}
       h+=`<td class="c"><button class="${c}" data-j="${j}" data-v="${v}" ${rv?'disabled':''}>${v?'B':'S'}</button></td>`});h+='</tr>'});h+='</table>'}
@@ -283,7 +286,7 @@ function render(){
   $('qwrap').querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{MODE=b.dataset.mode;store('tka-mode',MODE);render()});
   $('bm').onclick=()=>{toggleSave(s.key);render()};
   const b2=$('bm2');if(b2)b2.onclick=()=>{toggleSave(s.key);render()};
-  const c=$('cek');if(c)c.onclick=()=>{chk[cur]=true;if(correct(cur)){OK[s.key]=1;store('tka-ok',OK)}render()};
+  const c=$('cek');if(c)c.onclick=()=>{chk[cur]=true;if(correct(cur)){OK[s.key]=1;store(NSP+'tka-ok',OK)}render()};
   const u=$('ulang');if(u)u.onclick=()=>{chk[cur]=false;ans[cur]=blank(s);render()};
   $('prev').disabled=cur===0;
   $('next').textContent=cur===Q.length-1?'Lihat Hasil 🏁':'Berikutnya →';

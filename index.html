@@ -8,24 +8,62 @@
 <style>
 body{margin:0;font-family:Poppins,system-ui,sans-serif;background:#f7f5fc;color:#1e2240}
 .wrap{max-width:760px;margin:0 auto;padding:16px 14px 40px}
-.hero{background:linear-gradient(135deg,#7b3fbf,#a05bd9);color:#fff;border-radius:22px;padding:26px 22px}
+.hero{background:linear-gradient(135deg,#7b3fbf,#a05bd9);color:#fff;border-radius:22px;padding:24px 22px}
 .hero h1{margin:4px 0 6px;font-size:28px}.hero p{margin:0;opacity:.9}
-h2{font-size:18px;margin:24px 4px 10px}
+.mapel{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.mp{border:3px solid transparent;background:#fff;border-radius:18px;padding:14px 8px;text-align:center;font-family:inherit;font-size:14px;font-weight:700;color:#1e2240;cursor:pointer;box-shadow:0 2px 10px rgba(60,30,120,.06)}
+.mp .ic{font-size:34px;display:block;margin-bottom:4px}
+.mp.on{border-color:var(--c);background:var(--cl)}
+h2{font-size:17px;margin:22px 4px 10px;color:var(--c)}
 .item{display:flex;align-items:center;gap:14px;background:#fff;border-radius:16px;padding:16px;margin-bottom:10px;text-decoration:none;color:inherit;box-shadow:0 2px 10px rgba(60,30,120,.06);border-left:6px solid var(--c)}
-.item .ic{font-size:30px}.item b{display:block}.item small{color:#6b6f87}
-.item.soon{opacity:.5;pointer-events:none}
+.item .ic{font-size:30px;flex:none}.item b{display:block}.item small{color:#6b6f87}
+.item .tg{margin-left:auto;font-size:11px;font-weight:700;background:var(--cl);color:var(--c);border-radius:99px;padding:3px 9px;flex:none}
+.item.soon{opacity:.55}
+.note{background:#fff;border-radius:16px;padding:14px 16px;font-size:14px;color:#6b6f87;margin-top:10px}
+.hidden{display:none}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="hero"><h1>Latihan TKA SD 📚</h1><p>Kumpulan latihan Tes Kemampuan Akademik Kelas 6 SD</p></div>
+  <div class="hero"><h1>Latihan TKA SD 📚</h1><p>Latihan Tes Kemampuan Akademik Kelas 6 SD. Pilih mata pelajaran dulu, yuk!</p></div>
 
-  <h2>🧮 Matematika</h2>
-  <a class="item" style="--c:#7b3fbf" href="matematika/latihan-per-bagian/index.html"><span class="ic">🎯</span><span><b>Latihan Per Bagian</b><small>10 topik · 120 soal · per sub-bagian & per level · simpan soal</small></span></a>
-  <a class="item" style="--c:#7b3fbf" href="matematika/paket-2/index.html"><span class="ic">📘</span><span><b>Simulasi Paket 2</b><small>30 soal · 75 menit · lengkap dengan pembahasan</small></span></a>
+  <div class="mapel">
+    <button class="mp" data-m="matematika" style="--c:#7b3fbf;--cl:#efe6fb"><span class="ic">🧮</span>Matematika</button>
+    <button class="mp" data-m="bahasa-indonesia" style="--c:#d9480f;--cl:#fff0e6"><span class="ic">📖</span>Bahasa Indonesia</button>
+    <button class="mp" data-m="lainnya" style="--c:#2b8a3e;--cl:#ebfbee"><span class="ic">🌱</span>Mapel Lain</button>
+  </div>
 
-  <h2>📖 Bahasa Indonesia</h2>
-  <div class="item soon" style="--c:#e0920a"><span class="ic">⏳</span><span><b>Segera hadir</b><small>Belum ada paket</small></span></div>
+  <section id="matematika" style="--c:#7b3fbf;--cl:#efe6fb">
+    <h2>🎯 Latihan Per Bagian</h2>
+    <a class="item" href="matematika/latihan-per-bagian/index.html"><span class="ic">🎯</span><span><b>Latihan Per Bagian Matematika</b><small>10 topik · 120 soal · per sub-bagian & per level · simpan soal · pembahasan mudah/detail</small></span></a>
+    <h2>⏱️ Simulasi TKA (30 soal · 75 menit)</h2>
+    <a class="item" href="matematika/paket-2/index.html"><span class="ic">📘</span><span><b>Simulasi Paket 2</b><small>Dari PDF prediksi · tingkat sedang</small></span><span class="tg">Sedang</span></a>
+    <a class="item" href="sim/index.html?p=mtk-3"><span class="ic">📗</span><span><b>Simulasi Paket 3</b><small>Soal orisinal · sebaran lengkap 3 elemen</small></span><span class="tg">Sedang</span></a>
+    <a class="item" href="sim/index.html?p=mtk-4"><span class="ic">📕</span><span><b>Simulasi Paket 4</b><small>Soal orisinal · banyak soal penalaran (HOTS)</small></span><span class="tg">Menantang</span></a>
+  </section>
+
+  <section id="bahasa-indonesia" class="hidden" style="--c:#d9480f;--cl:#fff0e6">
+    <h2>🎯 Latihan Per Bagian</h2>
+    <a class="item" href="bahasa-indonesia/latihan-per-bagian/index.html"><span class="ic">🎯</span><span><b>Latihan Per Bagian Bahasa Indonesia</b><small>7 topik · 63 soal · kosakata, ide pokok, tersurat/tersirat, cerita, puisi & pantun, relevansi</small></span></a>
+    <h2>⏱️ Simulasi TKA (30 soal · 75 menit)</h2>
+    <a class="item" href="sim/index.html?p=bi-1"><span class="ic">📙</span><span><b>Simulasi Paket 1</b><small>Eksplanasi, prosedur, laporan, pidato, surat, fabel, puisi, cerita rakyat</small></span><span class="tg">Sedang</span></a>
+    <a class="item" href="sim/index.html?p=bi-2"><span class="ic">📒</span><span><b>Simulasi Paket 2</b><small>Berita, poster, biografi, jadwal, drama, pantun, puisi, cerpen</small></span><span class="tg">Sedang</span></a>
+  </section>
+
+  <section id="lainnya" class="hidden" style="--c:#2b8a3e;--cl:#ebfbee">
+    <div class="note">ℹ️ TKA SD hanya menguji <b>Matematika</b> dan <b>Bahasa Indonesia</b>. Mapel di bawah ini adalah latihan tambahan dan akan diisi menyusul.</div>
+    <h2>Segera hadir</h2>
+    <div class="item soon"><span class="ic">🔬</span><span><b>IPAS</b><small>Belum ada latihan</small></span></div>
+    <div class="item soon"><span class="ic">🇬🇧</span><span><b>Bahasa Inggris</b><small>Belum ada latihan</small></span></div>
+  </section>
 </div>
+<script>
+const MAP=['matematika','bahasa-indonesia','lainnya'];
+function pick(m){if(!MAP.includes(m))m='matematika';MAP.forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==m));document.querySelectorAll('.mp').forEach(b=>b.classList.toggle('on',b.dataset.m===m))}
+document.querySelectorAll('.mp').forEach(b=>b.onclick=()=>{location.hash=b.dataset.m});
+addEventListener('hashchange',()=>{const m=location.hash.slice(1);pick(m);try{localStorage.setItem('tka-mapel',m)}catch(e){}});
+let saved='';try{saved=localStorage.getItem('tka-mapel')||''}catch(e){}
+pick(location.hash.slice(1)||saved);
+</script>
 </body>
 </html>
