@@ -93,6 +93,28 @@ a{color:var(--ung)}
 .row{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:14px}
 .row .bar{flex:1;height:12px;background:#eee;border-radius:99px;overflow:hidden}
 .row .bar i{display:block;height:100%}
+.tabs{display:flex;gap:6px;background:#fff;border-radius:14px;padding:5px;margin-top:14px;box-shadow:0 2px 10px rgba(60,30,120,.06)}
+.tabs button{flex:1;border:0;background:none;border-radius:10px;padding:9px 4px;font-weight:700;font-size:14px;color:var(--mut)}
+.tabs button.on{background:var(--ung);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip{border:2px solid #e3ddef;background:#fff;border-radius:99px;padding:6px 12px;font-size:14px;font-weight:600;color:var(--ink)}
+.chip.on{background:var(--c,#7b3fbf);border-color:var(--c,#7b3fbf);color:#fff}
+.chip small{opacity:.75;font-weight:500}
+.lvcard{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:0;border-radius:16px;padding:16px;margin-top:10px;font-size:16px;color:var(--ink);box-shadow:0 2px 10px rgba(60,30,120,.06)}
+.lvcard .ic{font-size:30px}.lvcard b{display:block;font-size:18px}.lvcard small{color:var(--mut)}
+.bm{margin-left:auto;border:2px solid #e3ddef;background:#fff;border-radius:99px;padding:5px 12px;font-size:13px;font-weight:700;color:var(--mut)}
+.bm.on{background:#fff4dc;border-color:#f2a51d;color:#b07000}
+.subtag{display:inline-block;font-size:12px;color:var(--mut);margin-left:4px}
+.seg{display:flex;background:#f1edf9;border-radius:12px;padding:4px;margin-top:12px}
+.seg button{flex:1;border:0;background:none;border-radius:9px;padding:8px 4px;font-weight:700;font-size:14px;color:var(--mut)}
+.seg button.on{background:#fff;color:var(--ung);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.ex.mu{background:#e9f8ef}.ex.mu h4{color:#1f9d55}
+.svitem{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-bottom:1px solid #f0ebf8}
+.svitem:last-child{border-bottom:0}
+.svitem .tx{flex:1;font-size:14px}
+.svitem .tx b{display:block;font-size:13px;color:var(--c)}
+.svitem button{border:0;background:#fde8e8;color:#c33;border-radius:9px;padding:4px 10px;font-weight:700}
+.empty{text-align:center;color:var(--mut);padding:24px 10px}
 .hidden{display:none!important}
 .small{font-size:13px;color:var(--mut)}
 </style>
@@ -102,7 +124,7 @@ a{color:var(--ung)}
 <div id="vHome" class="wrap"></div>
 <div id="vQuiz" class="hidden">
   <div class="top"><div class="topin">
-    <button class="icon-btn" id="bHome">← Topik</button>
+    <button class="icon-btn" id="bHome">← Keluar</button><span class="small" id="pos"></span>
     <div class="steps" id="steps"></div>
   </div></div>
   <div class="wrap" id="qwrap"></div>
@@ -114,6 +136,7 @@ a{color:var(--ung)}
 <div id="vDone" class="wrap hidden"></div>
 
 <script src="soal.js"></script>
+<script src="tambah.js"></script>
 <script>
 const LV={1:['🟢 Mudah','lv1'],2:['🟡 Sedang','lv2'],3:['🔴 Sulit','lv3']};
 const TYPE={pg:'Pilihan Ganda',pgk:'Pilihan Ganda Kompleks',bs:'Benar / Salah'};
@@ -138,43 +161,103 @@ const FIG={
   s+=`<text x="6" y="${pt+ch/2}" transform="rotate(-90 6 ${pt+ch/2})" text-anchor="middle" fill="#6b6f87" dy="6">siswa</text>`;return s+'</svg>'}
 };
 
-/* ---------- shuffle pg options (stable per soal) ---------- */
+/* ---------- gabungkan bank soal ---------- */
+const BANK={};
+TOPIK.forEach(t=>{
+  t.subs=SUB[t.id];
+  t.soal.forEach((s,i)=>{s.sub=LAMA[t.id][i][0];s.simpel=LAMA[t.id][i][1]});
+  t.soal.push(...BARU[t.id]);
+  t.soal.forEach((s,i)=>{s.key=t.id+'-'+i;s.topik=t;BANK[s.key]=s});
+});
+/* acak urutan opsi PG (tetap sama tiap dibuka) */
 function seeded(str){let h=2166136261;for(const ch of str)h=Math.imul(h^ch.charCodeAt(0),16777619);return()=>{h^=h<<13;h^=h>>>17;h^=h<<5;return((h>>>0)%10000)/10000}}
-TOPIK.forEach(t=>t.soal.forEach((s,i)=>{if(s.t!=='pg')return;const r=seeded(t.id+i);const idx=s.o.map((_,j)=>j);for(let j=idx.length-1;j>0;j--){const k=Math.floor(r()*(j+1));[idx[j],idx[k]]=[idx[k],idx[j]]}s.o=idx.map(j=>s.o[j]);s.ans=idx.indexOf(s.ans)}));
+Object.values(BANK).forEach(s=>{if(s.t!=='pg')return;const r=seeded(s.key);const idx=s.o.map((_,j)=>j);for(let j=idx.length-1;j>0;j--){const k=Math.floor(r()*(j+1));[idx[j],idx[k]]=[idx[k],idx[j]]}s.o=idx.map(j=>s.o[j]);s.ans=idx.indexOf(s.ans)});
 
-/* ---------- progress (per browser) ---------- */
-let PROG={};try{PROG=JSON.parse(localStorage.getItem('tka-bagian')||'{}')}catch(e){}
-const save=()=>{try{localStorage.setItem('tka-bagian',JSON.stringify(PROG))}catch(e){}};
+/* ---------- penyimpanan di browser ---------- */
+function load(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}}
+function store(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+let OK=load('tka-ok',{});          // soal yang pernah dijawab benar
+let SAVED=load('tka-simpan',[]);   // soal yang disimpan untuk dibahas
+let MODE=load('tka-mode','mudah'); // versi pembahasan
+SAVED=SAVED.filter(k=>BANK[k]);
+const isSaved=k=>SAVED.includes(k);
+function toggleSave(k){SAVED=isSaved(k)?SAVED.filter(x=>x!==k):[...SAVED,k];store('tka-simpan',SAVED)}
+const plain=h=>{const d=document.createElement('div');d.innerHTML=h;return d.textContent.replace(/\s+/g,' ').trim()};
 
-/* ---------- home ---------- */
-function home(){
-  show('vHome');
+/* ---------- HOME ---------- */
+let TAB='topik';
+function home(tab){
+  if(tab)TAB=tab;show('vHome');
+  const total=Object.keys(BANK).length,done=Object.keys(OK).filter(k=>BANK[k]).length;
   let h=`<a class="back" href="../../index.html">← Semua latihan</a>
-  <div class="hero"><span class="tag">TKA Matematika · Kelas 6 SD</span><h1>Latihan Per Bagian 🎯</h1><p>10 topik sesuai kisi-kisi TKA. Tiap topik 6 soal, naik bertahap dari mudah ke sulit.</p></div>
-  <div class="card"><b>Cara belajar</b>
-  <div class="small" style="margin-top:4px">Baca <b>Konsep Kunci</b> dulu → kerjakan soal → tekan <b>Cek Jawaban</b> → pelajari <b>Logika Berpikir</b>, <b>Langkah</b>, dan <b>Cara Cepat</b>.</div>
-  <div class="legend"><span class="lvb lv1">🟢 Mudah</span><span class="lvb lv2">🟡 Sedang</span><span class="lvb lv3">🔴 Sulit</span></div></div>`;
-  ELEMEN.forEach(e=>{h+=`<div class="elh" style="--c:${e.c}">${e.ic} ${e.nama.toUpperCase()}</div>`;
-    TOPIK.filter(t=>t.el===e.id).forEach(t=>{const p=PROG[t.id];const st=p?`<b>${p.best}/6</b><br>${'⭐'.repeat(p.best>=6?3:p.best>=4?2:p.best>=2?1:0)||'—'}`:'<span>Belum</span>';
-      h+=`<button class="tp" style="--c:${e.c}" data-t="${t.id}"><span class="ic">${t.ic}</span><span><b>${t.nama}</b><small>6 soal · 🟢🟢🟡🟡🔴🔴</small></span><span class="st">${st}</span></button>`})});
+  <div class="hero"><span class="tag">TKA Matematika · Kelas 6 SD</span><h1>Latihan Per Bagian 🎯</h1><p>${TOPIK.length} topik · ${total} soal · sudah dikuasai ${done} soal</p></div>
+  <div class="tabs"><button data-tab="topik" class="${TAB==='topik'?'on':''}">📚 Per Topik</button><button data-tab="level" class="${TAB==='level'?'on':''}">🎚️ Per Level</button><button data-tab="simpan" class="${TAB==='simpan'?'on':''}">📌 Disimpan (${SAVED.length})</button></div>`;
+  if(TAB==='topik'){
+    h+=`<div class="card"><div class="small">Pilih topik, lalu pilih <b>sub-bagian</b> dan <b>level</b> yang mau didalami. Tekan <b>📌 Simpan</b> di soal yang mau dibahas lagi nanti.</div>
+    <div class="legend"><span class="lvb lv1">🟢 Mudah</span><span class="lvb lv2">🟡 Sedang</span><span class="lvb lv3">🔴 Sulit</span></div></div>`;
+    ELEMEN.forEach(e=>{h+=`<div class="elh" style="--c:${e.c}">${e.ic} ${e.nama.toUpperCase()}</div>`;
+      TOPIK.filter(t=>t.el===e.id).forEach(t=>{const n=t.soal.length,d=t.soal.filter(s=>OK[s.key]).length;
+        h+=`<button class="tp" style="--c:${e.c}" data-t="${t.id}"><span class="ic">${t.ic}</span><span><b>${t.nama}</b><small>${t.subs.length} sub-bagian · ${n} soal</small></span><span class="st"><b>${d}/${n}</b><br>${d===n?'⭐⭐⭐':d>=n*.66?'⭐⭐':d>=n*.33?'⭐':'dikuasai'}</span></button>`})});
+  }else if(TAB==='level'){
+    h+=`<div class="card small">Latihan campuran dari <b>semua topik</b> sesuai level yang dipilih. Urutan soal diacak setiap kali mulai.</div>`;
+    [[1,'🟢','Mudah','Pemanasan dan cek konsep dasar','#e3f7ea'],[2,'🟡','Sedang','Soal cerita dan 2–3 langkah','#fff4dc'],[3,'🔴','Sulit','Jebakan dan soal penalaran (HOTS) khas TKA','#fde8e8']].forEach(([l,ic,nm,ds,bg])=>{
+      const qs=Object.values(BANK).filter(s=>s.lv===l),d=qs.filter(s=>OK[s.key]).length;
+      h+=`<button class="lvcard" style="background:${bg}" data-lv="${l}"><span class="ic">${ic}</span><span><b>Level ${nm}</b><small>${ds}<br>${qs.length} soal · dikuasai ${d}</small></span></button>`});
+  }else{
+    if(!SAVED.length)h+=`<div class="card empty">📌 Belum ada soal yang disimpan.<br><span class="small">Tekan tombol <b>📌 Simpan</b> di pojok soal untuk menandai soal yang mau dibahas lagi bersama orang tua atau guru.</span></div>`;
+    else{h+=`<div class="card"><div class="actions" style="margin-top:0"><button class="btn" id="kerjaSimpan">Kerjakan ${SAVED.length} soal disimpan →</button></div>`;
+      SAVED.forEach(k=>{const s=BANK[k],e=EL[s.topik.el];h+=`<div class="svitem" style="--c:${e.c}"><div class="tx"><b>${s.topik.ic} ${s.topik.nama} · ${LV[s.lv][0]}</b>${plain(s.q).slice(0,110)}${plain(s.q).length>110?'…':''}</div><button data-del="${k}" aria-label="Hapus">✕</button></div>`});
+      h+=`<div class="actions"><button class="btn ghost" id="hapusSemua">Hapus semua</button></div></div>`}
+  }
   $('vHome').innerHTML=h;
-  document.querySelectorAll('.tp').forEach(b=>b.onclick=()=>start(b.dataset.t));
+  document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>home(b.dataset.tab));
+  document.querySelectorAll('.tp').forEach(b=>b.onclick=()=>setup(b.dataset.t));
+  document.querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{const l=+b.dataset.lv;const ks=Object.values(BANK).filter(s=>s.lv===l).map(s=>s.key);shuffle(ks);begin(ks,`Level ${LV[l][0]} · semua topik`,'level')});
+  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{toggleSave(b.dataset.del);home()});
+  const ks=$('kerjaSimpan');if(ks)ks.onclick=()=>begin([...SAVED],'📌 Soal disimpan','simpan');
+  const hs=$('hapusSemua');if(hs)hs.onclick=()=>{hs.textContent='Yakin? Tekan lagi';hs.onclick=()=>{SAVED=[];store('tka-simpan',SAVED);home()}};
+  scrollTo(0,0);
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+/* ---------- SETUP TOPIK (pilih sub-bagian & level) ---------- */
+let fSub='all',fLv=0;
+function setup(id,keep){
+  T=TOPIK.find(t=>t.id===id);E=EL[T.el];if(!keep){fSub='all';fLv=0}
+  show('vHome');
+  const bySub=T.soal.filter(s=>fSub==='all'||s.sub===fSub),list=bySub.filter(s=>!fLv||s.lv===fLv).sort((a,b)=>a.lv-b.lv);
+  let h=`<a class="back" href="#" id="bk">← Daftar topik</a>
+  <div class="hero" style="background:linear-gradient(135deg,${E.c},${E.c}cc)"><span class="tag">${E.ic} ${E.nama}</span><h1>${T.ic} ${T.nama}</h1><p>${T.soal.length} soal · dikuasai ${T.soal.filter(s=>OK[s.key]).length}</p></div>
+  <div class="konsep" style="--c:${E.c};--cl:${E.cl}"><h3>💡 Konsep Kunci</h3>${T.konsep}</div>
+  <div class="card" style="--c:${E.c}"><b>1. Pilih sub-bagian</b><div class="chips">
+   <button class="chip ${fSub==='all'?'on':''}" data-sub="all">Semua <small>(${T.soal.length})</small></button>
+   ${T.subs.map(([k,n])=>`<button class="chip ${fSub===k?'on':''}" data-sub="${k}">${n} <small>(${T.soal.filter(s=>s.sub===k).length})</small></button>`).join('')}</div>
+   <div style="margin-top:14px"><b>2. Pilih level</b></div><div class="chips">
+   <button class="chip ${!fLv?'on':''}" data-flv="0">Semua <small>(${bySub.length})</small></button>
+   ${[1,2,3].map(l=>`<button class="chip ${fLv===l?'on':''}" data-flv="${l}">${LV[l][0]} <small>(${bySub.filter(s=>s.lv===l).length})</small></button>`).join('')}</div>
+   <div class="actions"><button class="btn" id="go" style="background:${E.c}" ${list.length?'':'disabled'}>${list.length?`Mulai ${list.length} soal →`:'Belum ada soal untuk pilihan ini'}</button></div></div>`;
+  $('vHome').innerHTML=h;
+  $('bk').onclick=e=>{e.preventDefault();home('topik')};
+  document.querySelectorAll('[data-sub]').forEach(b=>b.onclick=()=>{fSub=b.dataset.sub;setup(id,1)});
+  document.querySelectorAll('[data-flv]').forEach(b=>b.onclick=()=>{fLv=+b.dataset.flv;setup(id,1)});
+  $('go').onclick=()=>{const nm=(fSub==='all'?'Semua sub-bagian':T.subs.find(x=>x[0]===fSub)[1])+(fLv?' · '+LV[fLv][0]:'');begin(list.map(s=>s.key),T.ic+' '+T.nama+' — '+nm,'topik')};
 }
 
-/* ---------- quiz ---------- */
-let T,E,cur,ans,chk;
-function start(id){T=TOPIK.find(t=>t.id===id);E=EL[T.el];cur=0;ans=T.soal.map(blank);chk=T.soal.map(()=>false);show('vQuiz');render();scrollTo(0,0)}
+/* ---------- KUIS ---------- */
+let T,E,Q,cur,ans,chk,JUDUL,ASAL;
 const blank=s=>s.t==='pg'?null:s.t==='pgk'?[]:s.o.map(()=>null);
-function answered(i){const a=ans[i],t=T.soal[i].t;return t==='pg'?a!==null:t==='pgk'?a.length>0:a.every(x=>x!==null)}
-function correct(i){const s=T.soal[i],a=ans[i];if(s.t==='pg')return a===s.ans;if(s.t==='pgk')return [...a].sort().join()===[...s.ans].sort().join();return a.every((x,j)=>x===s.ans[j])}
+function begin(keys,judul,asal){Q=keys.map(k=>BANK[k]);JUDUL=judul;ASAL=asal;cur=0;ans=Q.map(blank);chk=Q.map(()=>false);show('vQuiz');render();scrollTo(0,0)}
+function answered(i){const a=ans[i],t=Q[i].t;return t==='pg'?a!==null:t==='pgk'?a.length>0:a.every(x=>x!==null)}
+function correct(i){const s=Q[i],a=ans[i];if(s.t==='pg')return a===s.ans;if(s.t==='pgk')return [...a].sort().join()===[...s.ans].sort().join();return a.every((x,j)=>x===s.ans[j])}
 function keyText(s){if(s.t==='pg')return 'ABCD'[s.ans]+'. '+s.o[s.ans];if(s.t==='pgk')return 'Pernyataan nomor '+s.ans.map(x=>x+1).join(', ');return s.ans.map((v,j)=>`(${j+1}) ${v?'Benar':'Salah'}`).join(' · ')}
 
 function render(){
-  const s=T.soal[cur],rv=chk[cur];
-  $('steps').innerHTML=T.soal.map((_,i)=>`<i class="${chk[i]?(correct(i)?'ok':'no'):''} ${i===cur?'cur':''}"></i>`).join('');
-  let h='';
-  if(cur===0)h+=`<div class="konsep" style="--c:${E.c};--cl:${E.cl}"><h3>💡 Konsep Kunci: ${T.nama}</h3>${T.konsep}</div>`;
-  h+=`<div class="q" style="--c:${E.c};--cl:${E.cl}"><div class="qh"><div class="num">${cur+1}/6</div><div><div class="qt">${TYPE[s.t]}</div><span class="lvb ${LV[s.lv][1]}">${LV[s.lv][0]}</span></div></div><div class="qtext">${s.q}</div>`;
+  const s=Q[cur],rv=chk[cur],e=EL[s.topik.el],subNm=s.topik.subs.find(x=>x[0]===s.sub)[1];
+  $('pos').textContent=`${cur+1}/${Q.length}`;
+  $('steps').innerHTML=Q.length<=30?Q.map((_,i)=>`<i class="${chk[i]?(correct(i)?'ok':'no'):''} ${i===cur?'cur':''}"></i>`).join(''):`<i style="flex:none;width:${(cur+1)/Q.length*100}%;background:var(--ung)"></i>`;
+  let h=`<div class="small" style="margin-top:12px;font-weight:600">${JUDUL}</div>`;
+  h+=`<div class="q" style="--c:${e.c};--cl:${e.cl}"><div class="qh"><div class="num">${cur+1}</div><div><div class="qt">${TYPE[s.t]}</div><span class="lvb ${LV[s.lv][1]}">${LV[s.lv][0]}</span><span class="subtag">${s.topik.ic} ${subNm}</span></div>
+   <button class="bm ${isSaved(s.key)?'on':''}" id="bm">${isSaved(s.key)?'📌 Tersimpan':'📌 Simpan'}</button></div><div class="qtext">${s.q}</div>`;
   if(s.fig)h+=`<div class="fig">${FIG[s.fig]()}</div>`;
   if(s.t==='pg'){h+='<div class="opts">';s.o.forEach((o,j)=>{let c='opt';if(ans[cur]===j)c+=' sel';if(rv){if(j===s.ans)c+=' right';else if(ans[cur]===j)c+=' wrong'}
     h+=`<button class="${c}" data-j="${j}" ${rv?'disabled':''}><span class="k">${'ABCD'[j]}</span><span>${o}</span></button>`});h+='</div>'}
@@ -186,39 +269,46 @@ function render(){
   if(!rv)h+=`<div class="actions"><button class="btn or" id="cek" ${answered(cur)?'':'disabled'}>Cek Jawaban</button></div>`;
   else{const ok=correct(cur);
     h+=`<div class="verdict ${ok?'ok':'no'}">${ok?'🎉 Benar! Mantap!':'😅 Belum tepat, ayo pahami caranya'}<div class="kunci"><b>Kunci:</b> ${keyText(s)}</div></div>
-    <div class="ex lo"><h4>🧠 Logika Berpikir</h4>${s.logika}</div>
-    <div class="ex la"><h4>📝 Langkah Penyelesaian</h4>${s.langkah}</div>
-    <div class="ex ce"><h4>⚡ Cara Cepat</h4>${s.cepat}</div>`;
-    const nx=T.soal[cur+1];
-    if(nx&&nx.lv>s.lv){const same=T.soal.map((x,i)=>i).filter(i=>T.soal[i].lv===s.lv);const nOk=same.filter(i=>chk[i]&&correct(i)).length;
-      h+=`<div class="lvup">${nOk===same.length?`🚀 Level ${LV[s.lv][0]} beres semua! Siap naik ke <b>${LV[nx.lv][0]}</b>?`:`⬆️ Berikutnya level <b>${LV[nx.lv][0]}</b>. Kalau masih ragu, baca lagi Konsep Kunci di soal nomor 1 ya.`}</div>`}
-    if(!ok)h+=`<div class="actions"><button class="btn ghost" id="ulang">↺ Coba lagi soal ini</button></div>`}
+    <div class="seg"><button data-mode="mudah" class="${MODE==='mudah'?'on':''}">😊 Versi Mudah</button><button data-mode="detail" class="${MODE==='detail'?'on':''}">🔍 Versi Detail</button></div>`;
+    if(MODE==='mudah')h+=`<div class="ex mu"><h4>😊 Penjelasan Singkat</h4>${s.simpel}</div><div class="small" style="margin-top:6px">Masih bingung? Pilih <b>🔍 Versi Detail</b> untuk melihat logika, langkah lengkap, dan cara cepat.</div>`;
+    else h+=`<div class="ex lo"><h4>🧠 Logika Berpikir</h4>${s.logika}</div><div class="ex la"><h4>📝 Langkah Penyelesaian</h4>${s.langkah}</div><div class="ex ce"><h4>⚡ Cara Cepat</h4>${s.cepat}</div>`;
+    const nx=Q[cur+1];
+    if(ASAL==='topik'&&nx&&nx.lv>s.lv){const same=Q.map((x,i)=>i).filter(i=>Q[i].lv===s.lv);const nOk=same.filter(i=>chk[i]&&correct(i)).length;
+      h+=`<div class="lvup">${nOk===same.length?`🚀 Level ${LV[s.lv][0]} beres semua! Siap naik ke <b>${LV[nx.lv][0]}</b>?`:`⬆️ Berikutnya level <b>${LV[nx.lv][0]}</b>. Kalau masih ragu, simpan soal yang salah (📌) untuk dibahas nanti.`}</div>`}
+    if(!ok)h+=`<div class="actions"><button class="btn ghost" id="ulang">↺ Coba lagi soal ini</button>${isSaved(s.key)?'':'<button class="btn or" id="bm2">📌 Simpan untuk dibahas</button>'}</div>`}
   h+='</div>';
   $('qwrap').innerHTML=h;
   $('qwrap').querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const j=+b.dataset.j;if(s.t==='pg')ans[cur]=j;else{const a=ans[cur],k=a.indexOf(j);k<0?a.push(j):a.splice(k,1)}render()});
   $('qwrap').querySelectorAll('.pill').forEach(b=>b.onclick=()=>{ans[cur][+b.dataset.j]=b.dataset.v==='true';render()});
-  const c=$('cek');if(c)c.onclick=()=>{chk[cur]=true;render()};
+  $('qwrap').querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{MODE=b.dataset.mode;store('tka-mode',MODE);render()});
+  $('bm').onclick=()=>{toggleSave(s.key);render()};
+  const b2=$('bm2');if(b2)b2.onclick=()=>{toggleSave(s.key);render()};
+  const c=$('cek');if(c)c.onclick=()=>{chk[cur]=true;if(correct(cur)){OK[s.key]=1;store('tka-ok',OK)}render()};
   const u=$('ulang');if(u)u.onclick=()=>{chk[cur]=false;ans[cur]=blank(s);render()};
   $('prev').disabled=cur===0;
-  $('next').textContent=cur===5?'Lihat Hasil 🏁':'Berikutnya →';
+  $('next').textContent=cur===Q.length-1?'Lihat Hasil 🏁':'Berikutnya →';
 }
 $('prev').onclick=()=>{if(cur>0){cur--;render();scrollTo(0,0)}};
-$('next').onclick=()=>{if(cur<5){cur++;render();scrollTo(0,0)}else done()};
-$('bHome').onclick=home;
+$('next').onclick=()=>{if(cur<Q.length-1){cur++;render();scrollTo(0,0)}else done()};
+$('bHome').onclick=()=>ASAL==='topik'?setup(T.id,1):home(ASAL==='simpan'?'simpan':'level');
 
 function done(){
-  const ok=T.soal.map((_,i)=>chk[i]&&correct(i));const n=ok.filter(Boolean).length;
-  const p=PROG[T.id]||{best:0};p.best=Math.max(p.best,n);p.last=n;PROG[T.id]=p;save();
-  const per=[1,2,3].map(l=>{const ix=T.soal.map((s,i)=>s.lv===l?i:-1).filter(i=>i>=0);return [l,ix.filter(i=>ok[i]).length,ix.length]});
-  const msg=n===6?'Sempurna! Topik ini sudah kamu kuasai 🏆':n>=4?'Bagus! Ulangi soal yang salah supaya makin mantap 🌟':'Tidak apa-apa! Baca lagi Konsep Kunci dan Cara Cepat, lalu coba lagi 💪';
-  const unans=T.soal.filter((_,i)=>!chk[i]).length;
+  const ok=Q.map((_,i)=>chk[i]&&correct(i)),n=ok.filter(Boolean).length,N=Q.length;
+  const salah=Q.filter((s,i)=>!ok[i]),salahBlmSimpan=salah.filter(s=>!isSaved(s.key));
+  const per=[1,2,3].map(l=>{const ix=Q.map((s,i)=>s.lv===l?i:-1).filter(i=>i>=0);return [l,ix.filter(i=>ok[i]).length,ix.length]}).filter(x=>x[2]);
+  const pct=n/N;const msg=pct===1?'Sempurna! Kamu sudah menguasai ini 🏆':pct>=.7?'Bagus! Ulangi soal yang salah supaya makin mantap 🌟':'Tidak apa-apa! Simpan soal yang salah, lalu pelajari pembahasannya 💪';
+  const unans=chk.filter(x=>!x).length;
   show('vDone');
-  $('vDone').innerHTML=`<div class="hero" style="background:linear-gradient(135deg,${E.c},${E.c}cc)"><span class="tag">${E.ic} ${E.nama}</span><h1>${T.ic} ${T.nama}</h1><p>Hasil latihan</p></div>
-  <div class="card"><div class="score" style="color:${E.c}">${n}/6</div><p style="text-align:center;margin:4px 0 10px">${msg}</p>
+  $('vDone').innerHTML=`<div class="hero"><span class="tag">Hasil latihan</span><h1>${JUDUL}</h1></div>
+  <div class="card"><div class="score" style="color:var(--ung)">${n}/${N}</div><p style="text-align:center;margin:4px 0 10px">${msg}</p>
   ${unans?`<p class="small" style="text-align:center">${unans} soal belum dicek, jadi dihitung belum benar.</p>`:''}
-  ${per.map(([l,a,b])=>`<div class="row"><span class="lvb ${LV[l][1]}" style="width:92px">${LV[l][0]}</span><div class="bar"><i style="width:${a/b*100}%;background:${E.c}"></i></div><b>${a}/${b}</b></div>`).join('')}</div>
-  <div class="actions"><button class="btn ghost" id="dUlang">↺ Ulangi topik ini</button><button class="btn" id="dHome">Pilih topik lain</button></div>`;
-  $('dUlang').onclick=()=>start(T.id);$('dHome').onclick=home;scrollTo(0,0);
+  ${per.map(([l,a,b])=>`<div class="row"><span class="lvb ${LV[l][1]}" style="width:92px">${LV[l][0]}</span><div class="bar"><i style="width:${a/b*100}%;background:var(--ung)"></i></div><b>${a}/${b}</b></div>`).join('')}</div>
+  ${salah.length?`<div class="card"><b>Soal yang belum benar (${salah.length})</b><div class="small">${salahBlmSimpan.length?`Simpan supaya bisa dibahas lagi nanti di menu 📌 Disimpan.`:'Semua sudah tersimpan di menu 📌 Disimpan.'}</div>
+   ${salahBlmSimpan.length?`<div class="actions"><button class="btn or" id="simpanSalah">📌 Simpan ${salahBlmSimpan.length} soal yang salah</button></div>`:''}</div>`:''}
+  <div class="actions"><button class="btn ghost" id="dUlang">↺ Ulangi</button><button class="btn" id="dHome">Kembali</button></div>`;
+  const ss=$('simpanSalah');if(ss)ss.onclick=()=>{salahBlmSimpan.forEach(s=>toggleSave(s.key));done()};
+  $('dUlang').onclick=()=>begin(Q.map(s=>s.key),JUDUL,ASAL);
+  $('dHome').onclick=$('bHome').onclick;scrollTo(0,0);
 }
 function show(id){['vHome','vQuiz','vDone'].forEach(v=>$(v).classList.toggle('hidden',v!==id))}
 home();
